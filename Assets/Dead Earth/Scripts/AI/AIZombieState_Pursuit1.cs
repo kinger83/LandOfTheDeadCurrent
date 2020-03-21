@@ -49,7 +49,7 @@ public class AIZombieState_Pursuit1 : AIZombieState
 	
 		// Set path
 		_zombieStateMachine.navAgent.SetDestination(_zombieStateMachine.targetPosition);
-		_zombieStateMachine.navAgent.Resume();
+		_zombieStateMachine.navAgent.isStopped = false;
 
 		_currentLookAtWeight = 0.0f;
 	}

@@ -137,7 +137,7 @@ public class FPSController : MonoBehaviour
 	private Vector3 	_moveDirection 					= Vector3.zero;
 	private bool 		_previouslyGrounded				= false;
 	private bool		_isWalking						= true;
-	private bool 		_isJumping						= false;
+	//private bool 		_isJumping						= false;
 	private bool		_isCrouching					= false;
 	private Vector3		_localSpaceCameraPos			= Vector3.zero;
 	private float		_controllerHeight				= 0.0f;
@@ -237,7 +237,7 @@ public class FPSController : MonoBehaviour
 			}
 
 			_moveDirection.y = 0f;
-			_isJumping = false;
+			//_isJumping = false;
 			_movementStatus = PlayerMoveStatus.Landing;
 		} 
 		else 
@@ -299,7 +299,7 @@ public class FPSController : MonoBehaviour
 			{
 				_moveDirection.y 	= _jumpSpeed;
 				_jumpButtonPressed 	= false;
-				_isJumping 			= true;
+				//_isJumping 			= true;
 				// TODO: Play Jumping Sound
 			}
 		}
