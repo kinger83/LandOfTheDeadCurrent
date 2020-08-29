@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -56,7 +58,108 @@ public class AudioManager : MonoBehaviour
         // Fetch all the groups in the mixer - These will be our mixers tracks
         AudioMixerGroup[] groups = _mixer.FindMatchingGroups(string.Empty);
 
+        // Create our mixer tracks based on group name      (Track -> AuduiGroup)
+        foreach (AudioMixerGroup group in groups)
+        {
+            TrackInfo trackInfo = new TrackInfo();
+            trackInfo.Name = group.name;
+            trackInfo.Group = group;
+            trackInfo.TrackFader = null;
+            _tracks[group.name] = trackInfo;
+        }
+
     }
+
+
+    // -------------------------------------------------------------------------
+    //  Name:   GetTrackVolume
+    //  Desc:   Returns the volume of the AudioMixerGroup assign to the passed track.
+    //          AudioMixerGroup MUST expose its volume variable to script for this to
+    //          work and the variable MUST be the same as the name of the group.
+    // ----------------------------------------------------------------------------
+
+    public float GetTrackVolume (string track)
+    {
+        if (!_mixer) return float.MinValue;
+
+        TrackInfo trackInfo;
+
+        if(_tracks.TryGetValue(track, out trackInfo))
+        {
+            float volume;
+            _mixer.GetFloat(track, out volume);
+            return volume;
+        }
+        return float.MinValue;
+    }
+
+    public AudioMixerGroup GetAudioMixerGroupFromTrackName(string track)
+    {
+        if (!_mixer) return null;
+        TrackInfo trackInfo;
+
+        if (_tracks.TryGetValue(track, out trackInfo))
+        {
+            return trackInfo.Group;
+        }
+
+        return null;
+    }
+
+    // --------------------------------------------------------------------------
+    // Name:    SetTrackVolume
+    // Desc:    Sets the volume of the AudioMixerGroup assigned to the passed track.
+    //          AudioMixerGroup MUST expose its volume variable to script for this to
+    //          work and the variable MUST be the same as the name of the group.
+    //          If a fade time is given a coroutine will be used to perform the fade.
+    // -----------------------------------------------------------------------------
+    public void SetTrackVolume(string track, float volume, float fadeTime = 0.0f)
+    {
+        if (!_mixer) return;
+        TrackInfo trackInfo;
+        
+        if(_tracks.TryGetValue(track, out trackInfo))
+        {
+            // Stop any coroutine that might be in the middle of fading this track
+            if (trackInfo.TrackFader != null) StopCoroutine(trackInfo.TrackFader);
+
+            if (fadeTime == 0.0f)
+            {
+                _mixer.SetFloat(track, volume);
+            }
+            else
+            {
+                trackInfo.TrackFader = SetTrackVolumeInternal(track, volume, fadeTime);
+                StartCoroutine(trackInfo.TrackFader);
+            }
+        }
+
+    }
+    
+    
+    
+   // ----------------------------------------------------------------------------
+    // Name:  SetTrackVolumeInternal  -  Coroutine
+    // Desc:  Used by SetTrackVolume to implement a fade btween volumes of
+    //        a track over time.
+    // -----------------------------------------------------------------------------
+    protected IEnumerator SetTrackVolumeInternal (string track, float volume, float fadeTime)
+    {
+        float startVolume = 0.0f;
+        float timer = 0.0f;
+        _mixer.GetFloat(track, out startVolume);
+
+        while (timer < fadeTime)
+        {
+            timer += Time.unscaledDeltaTime;
+            _mixer.SetFloat(track, Mathf.Lerp(startVolume, volume, timer / fadeTime));
+            yield return null;
+        }
+
+        _mixer.SetFloat(track, volume);
+    }
+
+
 
 
 
